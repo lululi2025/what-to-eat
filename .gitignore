@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+.env.local
+.env.production.local
+
+# Vercel CLI artifacts (project link metadata)
+.vercel
+
+# Generated / large image assets — keep out of git repo
+clean_Gemini_Generated_Image_*.png
+*.psd
