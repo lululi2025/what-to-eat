@@ -1,0 +1,24 @@
+{
+  "name": "今天吃什麼？",
+  "short_name": "今天吃什麼",
+  "description": "隨機挑選附近餐廳，今天吃什麼不再煩惱！",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1a1714",
+  "background_color": "#1a1714",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

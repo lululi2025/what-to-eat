@@ -1,0 +1,5 @@
+-- 讓 Realtime 能正確 emit UPDATE / DELETE 事件
+-- 預設 (default) 只送 PK，FULL 才會送完整 row
+ALTER TABLE rooms   REPLICA IDENTITY FULL;
+ALTER TABLE members REPLICA IDENTITY FULL;
+ALTER TABLE vetoes  REPLICA IDENTITY FULL;

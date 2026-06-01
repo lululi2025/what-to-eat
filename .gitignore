@@ -10,3 +10,6 @@ dist
 # Generated / large image assets — keep out of git repo
 clean_Gemini_Generated_Image_*.png
 *.psd
+
+# Favicon source images (1024 PNG) — kept locally for re-slicing, not in repo
+favicon-src/
