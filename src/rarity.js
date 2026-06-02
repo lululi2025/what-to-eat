@@ -5,40 +5,40 @@ export const RARITIES = ["SSR", "SR", "R", "N"];
 
 export const RARITY_META = {
   SSR: {
-    label: "SSR",
+    label: "神店",
     color: "#ffd56b",
     bgGrad: "linear-gradient(135deg, #ffd56b 0%, #ff7e5f 100%)",
     textOnBg: "#3a2410",
     glow: "0 0 32px rgba(255, 213, 107, 0.55)",
     emoji: "✨",
-    desc: "神級稀有",
+    desc: "高評分 + 高人氣 + 很近",
   },
   SR: {
-    label: "SR",
+    label: "好店",
     color: "#c084fc",
     bgGrad: "linear-gradient(135deg, #c084fc 0%, #8b5cf6 100%)",
     textOnBg: "#1f0f3a",
     glow: "0 0 18px rgba(192, 132, 252, 0.4)",
     emoji: "💎",
-    desc: "優質",
+    desc: "評分高、評論多",
   },
   R: {
-    label: "R",
+    label: "中等",
     color: "#60a5fa",
     bgGrad: "linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)",
     textOnBg: "#0c1b3a",
     glow: "none",
     emoji: "⭐",
-    desc: "普通",
+    desc: "中規中矩",
   },
   N: {
-    label: "N",
+    label: "一般",
     color: "#9ca3af",
     bgGrad: "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)",
     textOnBg: "#1a1a1a",
     glow: "none",
     emoji: "🍴",
-    desc: "平凡",
+    desc: "少人評論",
   },
 };
 
@@ -56,10 +56,10 @@ export function getRarity(r) {
 
 // ─── 難度（決定哪些稀有度進池）───
 export const DIFFICULTIES = [
-  { id: "easy",   label: "簡單", emoji: "😇", desc: "只抽 SSR / SR",        allowed: ["SSR", "SR"] },
-  { id: "normal", label: "普通", emoji: "🎲", desc: "全部都有可能",         allowed: ["SSR", "SR", "R", "N"] },
-  { id: "hard",   label: "困難", emoji: "😈", desc: "只抽 R / N",          allowed: ["R", "N"] },
-  { id: "hell",   label: "地獄", emoji: "💀", desc: "只抽最遠最雷的店",     allowed: ["N"], extreme: true },
+  { id: "easy",   label: "安全牌",   desc: "只抽高評分的店",          allowed: ["SSR", "SR"] },
+  { id: "normal", label: "普通",     desc: "全部都有可能",            allowed: ["SSR", "SR", "R", "N"] },
+  { id: "hard",   label: "挑戰",     desc: "只抽普通跟平凡的店",      allowed: ["R", "N"] },
+  { id: "hell",   label: "黑暗料理", desc: "強制最遠、評分最低的店",  allowed: ["N"], extreme: true },
 ];
 
 export function getDifficulty(id) {

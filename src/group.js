@@ -137,9 +137,9 @@ export function subscribeToRoom(roomId, onChange) {
     .on("postgres_changes", { event: "*", schema: "public", table: "members", filter: `room_id=eq.${roomId}` }, onChange)
     .on("postgres_changes", { event: "*", schema: "public", table: "vetoes",  filter: `room_id=eq.${roomId}` }, onChange)
     .subscribe((status, err) => {
-      if (status !== "SUBSCRIBED") {
-        // 印到 console，使用者開 DevTools 能看到問題；polling 後備會接管
-        console.log(`[realtime] room:${roomId} status:`, status, err || "");
+      // 非 SUBSCRIBED 狀態交給 4 秒 polling 後備接管，沉默處理（不污染 production console）
+      if (status !== "SUBSCRIBED" && import.meta.env?.DEV) {
+        console.warn(`[realtime] room:${roomId} status:`, status, err || "");
       }
     });
   return () => { supabase.removeChannel(channel); };

@@ -6,6 +6,8 @@ import {
   _config,
 } from "./storage.js";
 import { RARITIES, RARITY_META, getRarity } from "./rarity.js";
+import { X, PencilSimple, Trash } from "@phosphor-icons/react";
+import { FoodIcon } from "./FoodIcon.jsx";
 
 // ─── 共用：Modal 外殼 ───
 function ModalShell({ title, onClose, children }) {
@@ -46,12 +48,12 @@ function ModalShell({ title, onClose, children }) {
           <button
             onClick={onClose}
             style={{
-              width: 32, height: 32, borderRadius: "50%", border: "none",
-              background: "var(--sf2)", color: "var(--tx)", fontSize: 16,
+              width: 34, height: 34, borderRadius: "50%", border: "none",
+              background: "var(--sf2)", color: "var(--tx)",
               cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
             }}
             aria-label="關閉"
-          >✕</button>
+          ><X size={16} weight="bold" /></button>
         </header>
         <div style={{ padding: 16, overflowY: "auto", flex: 1 }}>{children}</div>
       </div>
@@ -69,7 +71,9 @@ export function RatingModal({ pick, onSubmit, onClose }) {
   return (
     <ModalShell title="記錄這次的用餐" onClose={onClose}>
       <div style={{ textAlign: "center", marginBottom: 20 }}>
-        <div style={{ fontSize: 36, marginBottom: 6 }}>{pick.img || "🍽️"}</div>
+        <div style={{ marginBottom: 8, color: "var(--accent)" }}>
+          <FoodIcon type={pick.img || "default"} size={40} />
+        </div>
         <div style={{ fontWeight: 700, fontSize: 18 }}>{pick.name}</div>
         <div style={{ color: "var(--dim)", fontSize: 12, marginTop: 4 }}>
           {new Date().toLocaleDateString("zh-TW", { year: "numeric", month: "long", day: "numeric" })}
@@ -185,7 +189,7 @@ export function HistoryModal({ onClose }) {
   }
 
   return (
-    <ModalShell title="📖 吃過的店" onClose={onClose}>
+    <ModalShell title="吃過的店" onClose={onClose}>
       {stats && (
         <>
           <div style={{
@@ -240,7 +244,7 @@ export function HistoryModal({ onClose }) {
 
       {!items.length && (
         <div style={{ textAlign: "center", padding: 32, color: "var(--dim)", fontSize: 14 }}>
-          還沒有任何紀錄 🍽️<br />
+          還沒有任何紀錄 <br />
           <span style={{ fontSize: 12, opacity: .7 }}>挑到店後按「我去吃了」就會出現</span>
         </div>
       )}
@@ -256,12 +260,12 @@ export function HistoryModal({ onClose }) {
               padding: 12, borderRadius: 12, background: "var(--sf)",
             }}>
               <div style={{
-                fontSize: 24, width: 40, height: 40, flexShrink: 0,
+                width: 40, height: 40, flexShrink: 0,
                 background: "var(--sf2)", borderRadius: 10,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                position: "relative",
+                position: "relative", color: "var(--accent)",
               }}>
-                {h.img || "🍽️"}
+                <FoodIcon type={h.img || "default"} size={22} />
                 {h.rarity && (
                   <span style={{
                     position: "absolute", top: -6, right: -6,
@@ -290,23 +294,34 @@ export function HistoryModal({ onClose }) {
                     「{h.note}」
                   </div>
                 )}
+                {h.task && (
+                  <div style={{
+                    fontSize: 11, marginTop: 4, display: "inline-flex", alignItems: "center", gap: 4,
+                    padding: "2px 8px", borderRadius: 12,
+                    background: h.task.completed ? "rgba(61,139,94,.12)" : "rgba(192,132,252,.12)",
+                    color: h.task.completed ? "var(--accent3)" : "#9b6cf5",
+                    fontWeight: 600,
+                  }}>
+                    {h.task.completed ? "✓" : "🎲"} {h.task.text}
+                  </div>
+                )}
               </div>
               <button
                 onClick={() => setEditing(h)}
-                title="編輯"
+                title="編輯" aria-label="編輯"
                 style={{
                   background: "transparent", border: "none", cursor: "pointer",
-                  color: "var(--dim)", fontSize: 14, padding: 6,
+                  color: "var(--dim)", padding: 6, display: "flex", alignItems: "center",
                 }}
-              >✏️</button>
+              ><PencilSimple size={18} weight="duotone" /></button>
               <button
                 onClick={() => handleDelete(h.id)}
-                title="刪除"
+                title="刪除" aria-label="刪除"
                 style={{
                   background: "transparent", border: "none", cursor: "pointer",
-                  color: "var(--dim)", fontSize: 14, padding: 6,
+                  color: "var(--dim)", padding: 6, display: "flex", alignItems: "center",
                 }}
-              >🗑️</button>
+              ><Trash size={18} weight="duotone" /></button>
             </div>
           );
         })}
@@ -336,7 +351,7 @@ export function BlacklistModal({ onClose }) {
   const permEntries = Object.entries(rejects.permanent); // [id, {name, addedAt}]
 
   return (
-    <ModalShell title="⛔ 黑名單管理" onClose={onClose}>
+    <ModalShell title="黑名單管理" onClose={onClose}>
       {/* 永久黑名單 */}
       <div style={{ marginBottom: 24 }}>
         <div style={{
@@ -478,7 +493,7 @@ export function SettingsModal({ onClose, onChange }) {
   );
 
   return (
-    <ModalShell title="⚙️ 設定" onClose={onClose}>
+    <ModalShell title="設定" onClose={onClose}>
       {row(
         "音效",
         toggle(prefs.sound, () => update({ sound: !prefs.sound })),
@@ -495,11 +510,11 @@ export function SettingsModal({ onClose, onChange }) {
           onClick={handleReset}
           style={{
             width: "100%", padding: "10px", borderRadius: 10,
-            border: "1px solid rgba(255,107,107,.3)",
+            border: "1px solid rgba(209,76,63,.3)",
             background: "transparent", color: "var(--accent2)",
             fontSize: 13, fontWeight: 600, cursor: "pointer",
           }}
-        >🗑️ 清空全部資料</button>
+        ><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Trash size={15} weight="duotone" /> 清空全部資料</span></button>
         <p style={{ fontSize: 10, color: "var(--dim)", textAlign: "center", marginTop: 8, opacity: .6 }}>
           資料只存在這個瀏覽器，換裝置 / 清快取會消失
         </p>
@@ -508,19 +523,5 @@ export function SettingsModal({ onClose, onChange }) {
   );
 }
 
-// ─── 稀有度徽章（共用元件，可在 App.jsx 直接 import）───
-export function RarityBadge({ rarity, size = "sm" }) {
-  const meta = RARITY_META[rarity];
-  if (!meta) return null;
-  const sz = size === "lg" ? { p: "6px 12px", fs: 14, ls: 1.5 } : { p: "2px 7px", fs: 10, ls: .5 };
-  return (
-    <span style={{
-      display: "inline-block",
-      padding: sz.p, borderRadius: 8,
-      background: meta.bgGrad, color: meta.textOnBg,
-      fontSize: sz.fs, fontWeight: 700, fontFamily: "var(--fd)",
-      letterSpacing: sz.ls,
-      boxShadow: size === "lg" && rarity === "SSR" ? meta.glow : "none",
-    }}>{meta.emoji} {meta.label}</span>
-  );
-}
+// RarityBadge 移至 RarityBadge.jsx，這裡 re-export 維持向後相容
+export { RarityBadge } from "./RarityBadge.jsx";

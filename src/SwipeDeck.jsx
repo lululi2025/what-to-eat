@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import { getRarity, RARITY_META } from "./rarity.js";
 import { RarityBadge } from "./Modals.jsx";
+import { FoodIcon } from "./FoodIcon.jsx";
+import { Sparkle, ArrowsClockwise } from "@phosphor-icons/react";
 
 // ─── 滑卡常數 ───
 const SWIPE_THRESHOLD = 100;          // 拖超過這個距離 = 觸發
@@ -67,22 +69,23 @@ function SwipeCard({ candidate, onSwipe, isTop, stackIndex, wasVetoed }) {
         {/* 上方圖片區（如果有 photo 用照片，沒有用 emoji + 漸層）*/}
         <div style={{
           flex: "0 0 55%",
-          background: candidate.photo
-            ? `var(--sf2)`
-            : `linear-gradient(135deg, ${rMeta.color}33, ${rMeta.color}11)`,
+          background: `linear-gradient(135deg, ${rMeta.color}33, ${rMeta.color}11)`,
           position: "relative",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
-          {candidate.photo ? (
+          {candidate.photo && (
             <img
               src={`/api/photo?ref=${encodeURIComponent(candidate.photo)}&w=600`}
-              alt=""
+              alt={candidate.name}
               draggable={false}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
             />
-          ) : (
-            <div style={{ fontSize: 96 }}>{candidate.img || "🍽️"}</div>
           )}
+          {/* emoji fallback — 永遠在底層，photo 有的話疊在上面蓋住它；photo 載失敗就露出來 */}
+          <div style={{ color: rMeta.color, opacity: 0.85, position: "relative", zIndex: 0 }}>
+            <FoodIcon type={candidate.img || "default"} size={96} />
+          </div>
           {/* 稀有度徽章浮在左上 */}
           <div style={{ position: "absolute", top: 12, left: 12 }}>
             <RarityBadge rarity={rarity} size="lg" />
@@ -92,7 +95,7 @@ function SwipeCard({ candidate, onSwipe, isTop, stackIndex, wasVetoed }) {
             <div style={{
               position: "absolute", top: 12, right: 12,
               padding: "4px 10px", borderRadius: 8,
-              background: "rgba(255,107,107,.85)", color: "#fff",
+              background: "rgba(209,76,63,.85)", color: "#fff",
               fontSize: 11, fontWeight: 700, fontFamily: "var(--fd)",
               letterSpacing: .5,
             }}>上次 ✗ NO</div>
@@ -111,8 +114,8 @@ function SwipeCard({ candidate, onSwipe, isTop, stackIndex, wasVetoed }) {
                 {candidate.reviews > 0 && <span style={{ color: "var(--dim)", fontSize: 11, marginLeft: 3 }}>({candidate.reviews})</span>}
               </span>
             )}
-            <span>📍 {candidate.dist}m</span>
-            {candidate.price && <span>💰 {candidate.price}</span>}
+            <span>{candidate.dist}m</span>
+            {candidate.price && <span>{candidate.price}</span>}
           </div>
           {candidate.addr && (
             <p style={{
@@ -209,7 +212,9 @@ export function SwipeDeck({ candidates, vetoedIds, onVeto, onUnveto, onComplete 
         textAlign: "center", padding: "32px 16px",
         background: "var(--sf)", borderRadius: 18, marginBottom: 14,
       }}>
-        <div style={{ fontSize: 56, marginBottom: 12 }}>🎉</div>
+        <div style={{ marginBottom: 14, color: "var(--accent3)" }}>
+          <Sparkle size={56} weight="duotone" />
+        </div>
         <h3 style={{ margin: "0 0 8px", fontFamily: "var(--fd)", fontWeight: 700, fontSize: 20 }}>
           滑完了！
         </h3>
@@ -283,20 +288,20 @@ export function SwipeDeck({ candidates, vetoedIds, onVeto, onUnveto, onComplete 
           onClick={() => handleSwipe("veto")}
           style={{
             flex: 1, padding: "14px", borderRadius: 14, border: "none",
-            background: "rgba(255,107,107,.15)", color: "var(--accent2)",
+            background: "rgba(209,76,63,.15)", color: "var(--accent2)",
             fontSize: 15, fontWeight: 700, cursor: "pointer",
             fontFamily: "var(--fd)",
-            border: "2px solid rgba(255,107,107,.4)",
+            border: "2px solid rgba(209,76,63,.4)",
           }}
         >✗ NO</button>
         <button
           onClick={() => handleSwipe("pass")}
           style={{
             flex: 1, padding: "14px", borderRadius: 14, border: "none",
-            background: "rgba(93,228,167,.15)", color: "var(--accent3)",
+            background: "rgba(61,139,94,.15)", color: "var(--accent3)",
             fontSize: 15, fontWeight: 700, cursor: "pointer",
             fontFamily: "var(--fd)",
-            border: "2px solid rgba(93,228,167,.4)",
+            border: "2px solid rgba(61,139,94,.4)",
           }}
         >OK ✓</button>
       </div>

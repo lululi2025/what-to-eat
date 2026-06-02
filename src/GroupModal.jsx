@@ -7,9 +7,23 @@ import {
   getRoomState, subscribeToRoom, _config,
 } from "./group.js";
 import { getDeviceId, getUserName, setUserName } from "./supabase.js";
+import { addFriend, getMyFriends } from "./friends.js";
 import { getRarity, RARITY_META } from "./rarity.js";
 import { RarityBadge } from "./Modals.jsx";
 import { SwipeDeck } from "./SwipeDeck.jsx";
+import {
+  X, ArrowsClockwise, Sparkle, Hourglass, Eye,
+  DiceFive, ArrowLeft, ShareNetwork, Copy as CopyIcon,
+  UsersThree, SignIn, LockSimpleOpen, MapTrifold,
+} from "@phosphor-icons/react";
+
+// Google Maps 搜尋連結（沿用 App.jsx 同樣 helper）
+function gmapUrl(name, lat, lng) {
+  const q = encodeURIComponent(name);
+  return lat && lng
+    ? `https://www.google.com/maps/search/?api=1&query=${q}&center=${lat},${lng}`
+    : `https://www.google.com/maps/search/?api=1&query=${q}`;
+}
 
 // ─── 共用樣式 ───
 const overlayStyle = {
@@ -72,7 +86,7 @@ export function GroupModal({ candidates, meta, onClose, onResult, initialCode })
     const refetch = async () => {
       const s = await getRoomState(roomId);
       if (!alive) return;
-      if (s.room) setRoom(s.room); else { setError("房間不見了 🥲"); }
+      if (s.room) setRoom(s.room); else { setError("房間不見了"); }
       setMembers(s.members);
       setVetoes(s.vetoes);
     };
@@ -129,7 +143,7 @@ export function GroupModal({ candidates, meta, onClose, onResult, initialCode })
   if (stage === "entry") return (
     <div style={overlayStyle} onClick={handleClose}>
       <div style={sheetStyle} onClick={e => e.stopPropagation()}>
-        <Header title="👥 一起決定" onClose={handleClose} />
+        <Header title="一起決定" onClose={handleClose} />
         <Body>
           <p style={{ color: "var(--dim)", fontSize: 13, marginTop: 0 }}>
             開房或進房，一起滑掉不想吃的店，最後由系統抽。<br />
@@ -151,12 +165,12 @@ export function GroupModal({ candidates, meta, onClose, onResult, initialCode })
               style={{ ...primaryBtn, opacity: busy ? .6 : 1 }}
               disabled={busy || !candidates?.length}
               onClick={handleCreate}
-            >🆕 開新房（凍結附近 {Math.min(candidates?.length || 0, _config.MAX_CANDIDATES)} 家店）</button>
+            >開新房（凍結附近 {Math.min(candidates?.length || 0, _config.MAX_CANDIDATES)} 家店）</button>
             <button
               style={secondaryBtn}
               disabled={busy}
               onClick={() => { setError(""); setStage("joining"); }}
-            >🔢 我有房號，進房</button>
+            >我有房號，進房</button>
           </div>
           {!candidates?.length && (
             <p style={{ fontSize: 11, color: "var(--accent2)", marginTop: 10, textAlign: "center" }}>
@@ -196,7 +210,9 @@ export function GroupModal({ candidates, meta, onClose, onResult, initialCode })
         <Header title="連線中..." onClose={handleClose} />
         <Body>
           <div style={{ textAlign: "center", padding: 32, color: "var(--dim)" }}>
-            <div style={{ fontSize: 36, animation: "spin 1s linear infinite" }}>🔄</div>
+            <div style={{ animation: "spin 1.2s linear infinite", display: "inline-flex", color: "var(--accent)" }}>
+              <ArrowsClockwise size={36} weight="duotone" />
+            </div>
             <p>同步房間資料中...</p>
             {error && <ErrorBox>{error}</ErrorBox>}
           </div>
@@ -209,7 +225,7 @@ export function GroupModal({ candidates, meta, onClose, onResult, initialCode })
     <div style={overlayStyle}>
       <div style={sheetStyle}>
         <Header
-          title={`🏠 房間 ${room.code}`}
+          title={`房間 ${room.code}`}
           subtitle={isHost ? "你是房主" : null}
           onClose={handleClose}
         />
@@ -283,7 +299,7 @@ function Header({ title, subtitle, onClose }) {
         width: 32, height: 32, borderRadius: "50%", border: "none",
         background: "var(--sf2)", color: "var(--tx)", fontSize: 16,
         cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-      }}>✕</button>
+      }}><X size={16} weight="bold" /></button>
     </header>
   );
 }
@@ -296,9 +312,9 @@ function ErrorBox({ children }) {
   return (
     <div style={{
       marginTop: 12, padding: "10px 14px", borderRadius: 10,
-      background: "rgba(255,107,107,.1)", border: "1px solid rgba(255,107,107,.3)",
+      background: "rgba(209,76,63,.1)", border: "1px solid rgba(209,76,63,.3)",
       color: "var(--accent2)", fontSize: 13,
-    }}>⚠️ {children}</div>
+    }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><X size={14} weight="bold" /> {children}</span></div>
   );
 }
 
@@ -306,15 +322,17 @@ function InvitedStage({ code, name, onChangeName, busy, error, onClose, onJoin }
   return (
     <div style={overlayStyle} onClick={onClose}>
       <div style={sheetStyle} onClick={e => e.stopPropagation()}>
-        <Header title="🎉 你被邀請進房！" subtitle={`房號 ${code}`} onClose={onClose} />
+        <Header title="你被邀請進房！" subtitle={`房號 ${code}`} onClose={onClose} />
         <Body>
           <div style={{
             padding: "20px 16px", borderRadius: 14, marginBottom: 18,
-            background: "linear-gradient(135deg, rgba(245,158,66,.15), rgba(255,107,107,.1))",
-            border: "1px solid rgba(245,158,66,.3)",
+            background: "linear-gradient(135deg, rgba(232,97,44,.15), rgba(209,76,63,.1))",
+            border: "1px solid rgba(232,97,44,.3)",
             textAlign: "center",
           }}>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>👋</div>
+            <div style={{ marginBottom: 10, display: "flex", justifyContent: "center", color: "var(--accent)" }}>
+              <UsersThree size={42} weight="duotone" />
+            </div>
             <p style={{ margin: 0, fontSize: 14, color: "var(--tx)" }}>
               朋友在等你一起決定吃哪家
             </p>
@@ -342,7 +360,7 @@ function InvitedStage({ code, name, onChangeName, busy, error, onClose, onJoin }
             style={{ ...primaryBtn, marginTop: 24, opacity: busy || !name.trim() ? .5 : 1 }}
             disabled={busy || !name.trim()}
             onClick={onJoin}
-          >🚪 進房</button>
+          ><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><SignIn size={18} weight="duotone" /> 進房</span></button>
         </Body>
       </div>
     </div>
@@ -354,7 +372,7 @@ function JoinStage({ name, onChangeName, busy, error, onBack, onClose, onJoin })
   return (
     <div style={overlayStyle} onClick={onClose}>
       <div style={sheetStyle} onClick={e => e.stopPropagation()}>
-        <Header title="🔢 進房" onClose={onClose} />
+        <Header title="進房" onClose={onClose} />
         <Body>
           <button onClick={onBack} style={{
             background: "transparent", border: "none", color: "var(--dim)",
@@ -404,15 +422,15 @@ function ProgressBar({ members, allDone }) {
     <div style={{
       padding: "12px 14px", borderRadius: 14, marginBottom: 14,
       background: allDone
-        ? "linear-gradient(135deg, rgba(93,228,167,.2), rgba(63,184,138,.15))"
+        ? "linear-gradient(135deg, rgba(61,139,94,.2), rgba(45,107,72,.15))"
         : "var(--sf)",
       border: `2px solid ${allDone ? "var(--accent3)" : "var(--sf2)"}`,
       display: "flex", alignItems: "center", gap: 12,
       transition: "all .4s",
       animation: allDone ? "pulse 1.4s ease-in-out infinite" : "none",
     }}>
-      <div style={{ fontSize: 28, flexShrink: 0 }}>
-        {allDone ? "🎉" : "⏳"}
+      <div style={{ flexShrink: 0, display: "flex", color: allDone ? "var(--accent3)" : "var(--accent)" }}>
+        {allDone ? <Sparkle size={28} weight="duotone" /> : <Hourglass size={28} weight="duotone" />}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
@@ -434,7 +452,7 @@ function ProgressBar({ members, allDone }) {
           <div style={{
             height: "100%", width: `${pct}%`,
             background: allDone
-              ? "linear-gradient(90deg, var(--accent3), #3fb88a)"
+              ? "linear-gradient(90deg, var(--accent3), #2D6B48)"
               : "linear-gradient(90deg, var(--accent), var(--accent2))",
             transition: "width .4s ease",
           }} />
@@ -456,7 +474,7 @@ function RoomInfoBar({ room, members, deviceId, vetoes }) {
 
   const shareUrl = `https://what-to-eat-pi-two.vercel.app/?r=${room.code}`;
   // 用 navigator.share 時 url 會獨立顯示，text 只放招呼語避免重複
-  const shareTextShort = "今天吃什麼？🎰 一起決定吃哪家！";
+  const shareTextShort = "今天吃什麼？一起決定吃哪家！";
   // 沒 share API 的環境（桌機）→ 整段複製到剪貼簿，URL 要寫進去
   const shareTextFull = `${shareTextShort}\n${shareUrl}`;
 
@@ -509,10 +527,10 @@ function RoomInfoBar({ room, members, deviceId, vetoes }) {
             color: shared ? "#0f2a1f" : "#fff",
             fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0,
             display: "flex", alignItems: "center", gap: 6,
-            boxShadow: "0 4px 14px rgba(245,158,66,.3)",
+            boxShadow: "0 4px 14px rgba(232,97,44,.3)",
           }}
         >
-          {shared ? "✓ 已複製到剪貼簿" : <>📢 分享給朋友</>}
+          {shared ? "✓ 已複製到剪貼簿" : <><ShareNetwork size={18} weight="bold" /> 分享給朋友</>}
         </button>
       </div>
       <div style={{ fontSize: 11, color: "var(--dim)", marginBottom: 6 }}>
@@ -527,8 +545,8 @@ function RoomInfoBar({ room, members, deviceId, vetoes }) {
             <span key={m.device_id} style={{
               padding: "5px 11px", borderRadius: 14,
               background: done
-                ? "linear-gradient(135deg, var(--accent3), #3fb88a)"
-                : (isMe ? "rgba(245,158,66,.15)" : "var(--sf2)"),
+                ? "linear-gradient(135deg, var(--accent3), #2D6B48)"
+                : (isMe ? "rgba(232,97,44,.15)" : "var(--sf2)"),
               color: done
                 ? "#0f2a1f"
                 : (isMe ? "var(--accent)" : "var(--tx)"),
@@ -567,11 +585,13 @@ function VotingStage({ room, myMember, myVetoes, members, vetoes, allDone, isHos
       {room.veto_used > 0 && (
         <div style={{
           padding: "10px 14px", borderRadius: 10, marginBottom: 12,
-          background: "rgba(255,107,107,.08)",
-          border: "1px solid rgba(255,107,107,.3)",
+          background: "rgba(209,76,63,.08)",
+          border: "1px solid rgba(209,76,63,.3)",
           color: "var(--accent2)", fontSize: 12, textAlign: "center",
         }}>
-          🔄 上一輪結果被房主否決，這是第 {room.veto_used + 1} 輪 — 大家可以調整 NO 名單
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <ArrowsClockwise size={14} weight="bold" /> 上一輪結果被房主否決，這是第 {room.veto_used + 1} 輪 — 大家可以調整 NO 名單
+          </span>
         </div>
       )}
 
@@ -579,11 +599,11 @@ function VotingStage({ room, myMember, myVetoes, members, vetoes, allDone, isHos
       {poolEmpty && (
         <div style={{
           padding: "12px 14px", borderRadius: 12, marginBottom: 12,
-          background: "rgba(255,107,107,.15)",
+          background: "rgba(209,76,63,.15)",
           border: "1.5px solid var(--accent2)",
           color: "var(--accent2)", fontSize: 13, textAlign: "center",
         }}>
-          🆘 候選池被全員 NO 光了，沒店可抽<br />
+          候選池被全員 NO 光了，沒店可抽<br />
           <span style={{ fontSize: 11, opacity: .8 }}>
             {isHost ? "按下方「全部重選」清空，大家重新來" : "等房主按「全部重選」"}
           </span>
@@ -606,8 +626,8 @@ function VotingStage({ room, myMember, myVetoes, members, vetoes, allDone, isHos
       {myDone && (
         <div style={{
           padding: "16px", borderRadius: 12, marginBottom: 10,
-          background: "rgba(93,228,167,.08)",
-          border: "1px solid rgba(93,228,167,.3)",
+          background: "rgba(61,139,94,.08)",
+          border: "1px solid rgba(61,139,94,.3)",
           color: "var(--accent3)", textAlign: "center",
         }}>
           <div style={{ fontSize: 28, marginBottom: 6 }}>✓</div>
@@ -635,19 +655,19 @@ function VotingStage({ room, myMember, myVetoes, members, vetoes, allDone, isHos
           onClick={onDraw}
           style={{
             ...primaryBtn, marginTop: 12,
-            background: "linear-gradient(135deg,var(--accent3),#3fb88a)",
+            background: "linear-gradient(135deg,var(--accent3),#2D6B48)",
             color: "#0f2a1f", fontSize: 18, padding: "18px",
-            boxShadow: "0 8px 28px rgba(93,228,167,.4)",
+            boxShadow: "0 8px 28px rgba(61,139,94,.4)",
             animation: "pulse 1.6s ease-in-out infinite",
           }}
-        >🎰 開抽！（從 {poolSize} 家裡抽）</button>
+        >開抽！（從 {poolSize} 家裡抽）</button>
       )}
       {!isHost && allDone && !poolEmpty && (
         <div style={{
           marginTop: 12, padding: "14px", borderRadius: 12,
-          background: "rgba(93,228,167,.1)", border: "1px solid var(--accent3)",
+          background: "rgba(61,139,94,.1)", border: "1px solid var(--accent3)",
           color: "var(--accent3)", fontSize: 13, fontWeight: 600, textAlign: "center",
-        }}>等房主按開抽 🎰</div>
+        }}>等房主按開抽</div>
       )}
 
       {/* 全部重選按鈕（房主限定）— Round 2+ 常駐 OR 池子空時超顯眼 */}
@@ -659,7 +679,7 @@ function VotingStage({ room, myMember, myVetoes, members, vetoes, allDone, isHos
                 ...primaryBtn, marginTop: 12,
                 background: "linear-gradient(135deg, var(--accent2), #c84545)",
                 color: "#fff", fontSize: 15, padding: "14px",
-                boxShadow: "0 6px 22px rgba(255,107,107,.4)",
+                boxShadow: "0 6px 22px rgba(209,76,63,.4)",
               }
             : {
                 marginTop: 10, padding: "10px",
@@ -668,7 +688,7 @@ function VotingStage({ room, myMember, myVetoes, members, vetoes, allDone, isHos
                 color: "var(--dim)", fontSize: 12, fontWeight: 500, cursor: "pointer",
               }
           }
-        >🆘 全部重選（清空所有人的 NO 名單）</button>
+        >全部重選（清空所有人的 NO 名單）</button>
       )}
     </div>
   );
@@ -683,7 +703,9 @@ function ResultStage({ room, pickedPlace, vetoes, members, isHost, onVetoFinal, 
   if (room.status === "drawing" || !pickedPlace) {
     return (
       <div style={{ textAlign: "center", padding: 24 }}>
-        <div style={{ fontSize: 36, marginBottom: 10, animation: "spin 1.5s linear infinite" }}>🎰</div>
+        <div style={{ marginBottom: 12, color: "var(--accent)", animation: "spin 1.5s linear infinite", display: "inline-flex" }}>
+          <DiceFive size={36} weight="duotone" />
+        </div>
         <p style={{ color: "var(--dim)", fontSize: 14 }}>
           {isHost ? "按下方再抽一次" : "等房主再抽..."}
         </p>
@@ -691,7 +713,7 @@ function ResultStage({ room, pickedPlace, vetoes, members, isHost, onVetoFinal, 
           池子裡還剩 {poolSize} 家可抽
         </p>
         {isHost && (
-          <button onClick={onDraw} style={{ ...primaryBtn, marginTop: 16 }}>🎰 再抽</button>
+          <button onClick={onDraw} style={{ ...primaryBtn, marginTop: 16 }}>再抽</button>
         )}
       </div>
     );
@@ -722,6 +744,26 @@ function ResultStage({ room, pickedPlace, vetoes, members, isHost, onVetoFinal, 
           {pickedPlace.rating > 0 && `★ ${pickedPlace.rating} · `}
           {pickedPlace.dist}m · {pickedPlace.price}
         </div>
+        {pickedPlace.addr && (
+          <div style={{ fontSize: 11, color: "var(--dim)", marginTop: 6, opacity: .85 }}>
+            {pickedPlace.addr}
+          </div>
+        )}
+        {/* Google Maps 連結 — 點開直接導航 */}
+        <a
+          href={gmapUrl(pickedPlace.name, pickedPlace.lat, pickedPlace.lng)}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            marginTop: 12, padding: "8px 16px", borderRadius: 20,
+            background: "rgba(61,139,94,.12)", border: "1px solid var(--accent3)",
+            color: "var(--accent3)", fontSize: 13, fontWeight: 600,
+            textDecoration: "none",
+          }}
+        >
+          <MapTrifold size={14} weight="duotone" /> Google Maps 導航
+        </a>
       </div>
 
       {/* 動作 — 只有房主能拍板 */}
@@ -729,8 +771,8 @@ function ResultStage({ room, pickedPlace, vetoes, members, isHost, onVetoFinal, 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <button
             onClick={onAccept}
-            style={{ ...primaryBtn, background: "linear-gradient(135deg,var(--accent3),#3fb88a)", color: "#0f2a1f" }}
-          >🎉 就吃這家！</button>
+            style={{ ...primaryBtn, background: "linear-gradient(135deg,var(--accent3),#2D6B48)", color: "#0f2a1f" }}
+          >就吃這家！</button>
 
           {remainingVetoes > 0 ? (
             <button onClick={onVetoFinal} style={secondaryBtn}>
@@ -740,24 +782,101 @@ function ResultStage({ room, pickedPlace, vetoes, members, isHost, onVetoFinal, 
             <div style={{
               padding: 12, borderRadius: 10, background: "var(--sf)",
               color: "var(--dim)", fontSize: 12, textAlign: "center",
-            }}>否決機會用完了，按上面決定吧 🍽️</div>
+            }}>否決機會用完了，按上面決定吧 </div>
           )}
         </div>
       ) : (
         <div style={{
           padding: "16px", borderRadius: 12,
-          background: "rgba(245,158,66,.08)", border: "1px solid rgba(245,158,66,.3)",
+          background: "rgba(232,97,44,.08)", border: "1px solid rgba(232,97,44,.3)",
           color: "var(--accent)", fontSize: 13, textAlign: "center",
         }}>
-          <div style={{ fontSize: 24, marginBottom: 6 }}>👀</div>
-          等房主決定要不要去 🍽️
-          {remainingVetoes > 0 && (
+          <div style={{ marginBottom: 8, display: "flex", justifyContent: "center", color: "var(--accent)" }}>
+            <Eye size={28} weight="duotone" />
+          </div>
+          等房主決定要不要去           {remainingVetoes > 0 && (
             <div style={{ fontSize: 11, color: "var(--dim)", marginTop: 4, opacity: .8 }}>
               （房主還有 {remainingVetoes} 次重抽機會）
             </div>
           )}
         </div>
       )}
+
+      {/* R1: 加為常用朋友 — 群組房結束後雙方可互加，建立朋友圈 */}
+      <AddFriendsSection members={members} />
+    </div>
+  );
+}
+
+// R1: 結算頁的「加為常用朋友」區塊
+function AddFriendsSection({ members }) {
+  const myId = getDeviceId();
+  const [existingFriendIds, setExistingFriendIds] = useState(new Set());
+  const [adding, setAdding] = useState(new Set());
+  const [added, setAdded] = useState(new Set());
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const friends = await getMyFriends();
+        setExistingFriendIds(new Set(friends.map(f => f.deviceId)));
+      } catch (_) { /* silent */ }
+    })();
+  }, []);
+
+  const others = (members || []).filter(m =>
+    m.device_id !== myId && !existingFriendIds.has(m.device_id) && !added.has(m.device_id)
+  );
+
+  if (others.length === 0) return null;
+
+  const handleAdd = async (m) => {
+    setAdding(prev => new Set(prev).add(m.device_id));
+    try {
+      await addFriend(m.device_id, getUserName() || "我", m.name || "朋友");
+      setAdded(prev => new Set(prev).add(m.device_id));
+    } catch (e) {
+      alert("加朋友失敗，稍後再試");
+    } finally {
+      setAdding(prev => { const next = new Set(prev); next.delete(m.device_id); return next; });
+    }
+  };
+
+  return (
+    <div style={{
+      marginTop: 16, padding: "12px 14px", borderRadius: 12,
+      background: "rgba(192,132,252,.08)", border: "1px solid rgba(192,132,252,.25)",
+    }}>
+      <div style={{ fontSize: 11, color: "#9b6cf5", fontWeight: 600, marginBottom: 8, letterSpacing: 0.5, textTransform: "uppercase" }}>
+        💜 加為常用朋友
+      </div>
+      <div style={{ fontSize: 11, color: "var(--dim)", marginBottom: 10, lineHeight: 1.5 }}>
+        加為朋友後可以互相推薦店家，朋友推的店會混進你下次抽店的池子
+      </div>
+      {others.map(m => (
+        <div key={m.device_id} style={{
+          display: "flex", alignItems: "center", gap: 10,
+          padding: "8px 10px", borderRadius: 10, background: "var(--sf)",
+          marginBottom: 6,
+        }}>
+          <div style={{
+            width: 28, height: 28, borderRadius: "50%",
+            background: "linear-gradient(135deg,var(--accent),var(--accent2))",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "#fff", fontWeight: 700, fontSize: 12, flexShrink: 0,
+          }}>{m.name?.[0] || "?"}</div>
+          <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: "var(--tx)" }}>{m.name || "朋友"}</div>
+          <button
+            onClick={() => handleAdd(m)}
+            disabled={adding.has(m.device_id)}
+            style={{
+              padding: "5px 12px", borderRadius: 16, border: "1px solid #c084fc",
+              background: "rgba(192,132,252,.1)", color: "#9b6cf5",
+              fontSize: 11, fontWeight: 700, cursor: "pointer",
+            }}
+          >{adding.has(m.device_id) ? "..." : "+ 加朋友"}</button>
+        </div>
+      ))}
     </div>
   );
 }

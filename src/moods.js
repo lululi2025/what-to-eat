@@ -7,7 +7,7 @@ export const MOODS = [
   {
     id: "random",
     label: "隨便",
-    emoji: "🎲",
+    icon: "/illustrations/mood-random.png",
     desc: "什麼都好",
     types: ["restaurant", "cafe", "bakery", "meal_takeaway"],
     nameKeywords: null,
@@ -15,7 +15,7 @@ export const MOODS = [
   {
     id: "hungry",
     label: "餓爆了",
-    emoji: "🔥",
+    icon: "/illustrations/mood-hungry.png",
     desc: "吃飽為主",
     types: ["restaurant", "meal_takeaway"],
     nameKeywords: null,
@@ -23,7 +23,7 @@ export const MOODS = [
   {
     id: "chill",
     label: "想放鬆",
-    emoji: "☕",
+    icon: "/illustrations/mood-chill.png",
     desc: "坐下慢慢喝",
     types: ["cafe"],
     nameKeywords: null,
@@ -31,7 +31,7 @@ export const MOODS = [
   {
     id: "sweet",
     label: "想吃甜",
-    emoji: "🍰",
+    icon: "/illustrations/mood-sweet.png",
     desc: "甜點、麵包、咖啡",
     types: ["bakery", "cafe"],
     nameKeywords: [
@@ -57,7 +57,7 @@ export const MOODS = [
   {
     id: "fast",
     label: "趕時間",
-    emoji: "🥡",
+    icon: "/illustrations/mood-fast.png",
     desc: "外帶外送",
     types: ["meal_takeaway", "meal_delivery"],
     nameKeywords: null,
@@ -65,7 +65,7 @@ export const MOODS = [
   {
     id: "drink",
     label: "想喝兩杯",
-    emoji: "🍻",
+    icon: "/illustrations/mood-drink.png",
     desc: "酒吧 / 餐酒館 / 居酒屋",
     types: ["bar", "restaurant"],
     nameKeywords: [

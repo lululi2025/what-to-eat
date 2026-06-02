@@ -17,9 +17,11 @@ const TEMP_REJECT_MS = TEMP_REJECT_DAYS * 24 * 60 * 60 * 1000;
 
 const PREFS_DEFAULT = {
   excludeChains: false,
+  onlyOpen: true,         // 只看營業中（避免抽到休息店）
   difficulty: "normal",   // 'easy' | 'normal' | 'hard' | 'hell'
   mood: "random",
-  sound: false,           // 預設關
+  sound: true,            // 命中音效預設開（手機鎖靜音自動沉默）
+  enableTasks: false,     // 抽店時順便抽一張吃飯任務（預設關，避免新使用者被嚇到）
 };
 
 const empty = () => ({
