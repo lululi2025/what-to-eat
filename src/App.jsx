@@ -560,9 +560,24 @@ export default function App() {
         display: "flex", justifyContent: "flex-end",
         padding: "16px 16px 0",
       }}>
-        <button onClick={() => setShowSettings(true)} title="設定" aria-label="設定" style={iconBtnStyle}>
-          <GearSix size={20} weight="duotone" />
-        </button>
+        {(() => {
+          const settingsBadge = pendingRecs.length + ackToasts.length;
+          return (
+            <button onClick={() => setShowSettings(true)} title="設定" aria-label="設定" style={{ ...iconBtnStyle, position: "relative" }}>
+              <GearSix size={20} weight="duotone" />
+              {settingsBadge > 0 && (
+                <span style={{
+                  position: "absolute", top: -2, right: -2,
+                  background: "linear-gradient(135deg,#c084fc,#9b6cf5)",
+                  color: "#fff", fontSize: 10, fontWeight: 700,
+                  minWidth: 16, height: 16, padding: "0 4px",
+                  borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: "0 2px 6px rgba(192,132,252,.5)",
+                }}>{settingsBadge > 9 ? "9+" : settingsBadge}</span>
+              )}
+            </button>
+          );
+        })()}
       </nav>
 
       {/* Title section */}
@@ -1432,57 +1447,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* 底部：歷史與黑名單入口（事後查找類功能下放到頁尾）*/}
-      <div style={{
-        display: "flex", justifyContent: "center", gap: 24,
-        padding: "28px 16px 0",
-        position: "relative", zIndex: 1,
-      }}>
-        <button onClick={() => setShowHistory(true)} style={{
-          display: "inline-flex", alignItems: "center", gap: 6,
-          background: "transparent", border: "none",
-          color: "var(--dim)", fontSize: 13, fontWeight: 500,
-          cursor: "pointer", padding: "6px 8px",
-        }}>
-          <BookOpenText size={16} weight="duotone" /> 吃過的店
-        </button>
-        <button onClick={() => setShowBlacklist(true)} style={{
-          display: "inline-flex", alignItems: "center", gap: 6,
-          background: "transparent", border: "none",
-          color: "var(--dim)", fontSize: 13, fontWeight: 500,
-          cursor: "pointer", padding: "6px 8px",
-        }}>
-          <Prohibit size={16} weight="duotone" /> 黑名單
-        </button>
-        {/* 朋友圈按鈕 — 加未讀紅點 badge（pending recs + acks）*/}
-        {(() => {
-          const unread = pendingRecs.length + ackToasts.length;
-          return (
-            <button onClick={() => setShowFriends(true)} style={{
-              position: "relative",
-              display: "inline-flex", alignItems: "center", gap: 6,
-              background: "transparent", border: "none",
-              color: unread > 0 ? "#9b6cf5" : "var(--dim)",
-              fontSize: 13, fontWeight: unread > 0 ? 700 : 500,
-              cursor: "pointer", padding: "6px 8px",
-            }}>
-              <UsersThree size={16} weight="duotone" /> 朋友圈
-              {unread > 0 && (
-                <span style={{
-                  position: "absolute", top: 2, right: -2,
-                  background: "linear-gradient(135deg,#c084fc,#9b6cf5)",
-                  color: "#fff", fontSize: 10, fontWeight: 700,
-                  minWidth: 16, height: 16, padding: "0 4px",
-                  borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 2px 6px rgba(192,132,252,.4)",
-                }}>{unread > 9 ? "9+" : unread}</span>
-              )}
-            </button>
-          );
-        })()}
-      </div>
-
-      <footer style={{ textAlign: "center", padding: "16px 16px 0", fontSize: 11, color: "var(--dim)", position: "relative", zIndex: 1, opacity: .5 }}>
+      <footer style={{ textAlign: "center", padding: "32px 16px 0", fontSize: 11, color: "var(--dim)", position: "relative", zIndex: 1, opacity: .5 }}>
         Powered by Google Places API・食べログ連結為站外搜尋<br />全球適用・在日本可搭配食べログ查看詳細評分
       </footer>
 
@@ -1557,6 +1522,10 @@ export default function App() {
           <SettingsModal
             onClose={() => setShowSettings(false)}
             onChange={(next) => setLocalPrefs(next)}
+            onOpenHistory={() => setShowHistory(true)}
+            onOpenBlacklist={() => setShowBlacklist(true)}
+            onOpenFriends={() => setShowFriends(true)}
+            friendsBadge={pendingRecs.length + ackToasts.length}
           />
         )}
         {showGroup && (

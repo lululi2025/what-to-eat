@@ -450,7 +450,7 @@ export function BlacklistModal({ onClose }) {
 }
 
 // ─── 設定 Modal ───
-export function SettingsModal({ onClose, onChange }) {
+export function SettingsModal({ onClose, onChange, onOpenHistory, onOpenBlacklist, onOpenFriends, friendsBadge = 0 }) {
   const [prefs, setLocal] = useState(() => getPrefs());
 
   const update = (patch) => {
@@ -492,8 +492,46 @@ export function SettingsModal({ onClose, onChange }) {
     </button>
   );
 
+  // 跳到其他 modal 的 button — 統一樣式
+  const navItem = (label, hint, badge, onClick) => (
+    <button
+      onClick={onClick}
+      style={{
+        width: "100%",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "14px 14px", background: "var(--sf)", borderRadius: 12, marginBottom: 8,
+        border: "none", cursor: "pointer", textAlign: "left",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,.4)",
+        fontFamily: "var(--fb)",
+      }}
+    >
+      <div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--tx)" }}>{label}</div>
+        {hint && <div style={{ fontSize: 11, color: "var(--dim)", marginTop: 2 }}>{hint}</div>}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {badge > 0 && (
+          <span style={{
+            background: "linear-gradient(135deg,#c084fc,#9b6cf5)",
+            color: "#fff", fontSize: 10, fontWeight: 700,
+            minWidth: 18, height: 18, padding: "0 5px",
+            borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center",
+          }}>{badge > 9 ? "9+" : badge}</span>
+        )}
+        <span style={{ color: "var(--dim)", fontSize: 18 }}>›</span>
+      </div>
+    </button>
+  );
+
   return (
     <ModalShell title="設定" onClose={onClose}>
+      {/* 功能入口 — 「我的資料」section */}
+      <div style={{ fontSize: 11, color: "var(--dim)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 500, marginBottom: 8 }}>我的資料</div>
+      {navItem("📖 吃過的店", "歷史紀錄 + 星等 + 心得", 0, () => { onOpenHistory?.(); onClose(); })}
+      {navItem("🚫 黑名單", "暫時 / 永久不要的店", 0, () => { onOpenBlacklist?.(); onClose(); })}
+      {navItem("👯 朋友圈", "朋友 + 收到推薦 + 通知", friendsBadge, () => { onOpenFriends?.(); onClose(); })}
+
+      <div style={{ fontSize: 11, color: "var(--dim)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 500, marginTop: 20, marginBottom: 8 }}>偏好</div>
       {row(
         "音效",
         toggle(prefs.sound, () => update({ sound: !prefs.sound })),
