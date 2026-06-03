@@ -281,6 +281,19 @@ export default function App() {
     try { await ackMyRec(recId); } catch (_) {}
   };
 
+  // 進 App 時若有 pending recs 跳 toast（這個 session 顯示過就不再跳）
+  const [showPendingToast, setShowPendingToast] = useState(false);
+  useEffect(() => {
+    if (pendingRecs.length === 0) return;
+    if (typeof sessionStorage === "undefined") return;
+    if (sessionStorage.getItem("wte_pending_toast_seen")) return;
+    setShowPendingToast(true);
+  }, [pendingRecs.length]);
+  const dismissPendingToast = () => {
+    setShowPendingToast(false);
+    try { sessionStorage.setItem("wte_pending_toast_seen", "1"); } catch (_) {}
+  };
+
   const changeMood = (id) => {
     updatePrefs({ mood: id });
     resetPick();
@@ -605,6 +618,39 @@ export default function App() {
         </div>
       )}
 
+      {/* 朋友推薦給我 — 進 App 顯示一次（session 內 dismiss 後不再跳）*/}
+      {showPendingToast && pendingRecs.length > 0 && (
+        <div style={{ padding: "0 16px 8px", position: "relative", zIndex: 1 }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "10px 12px",
+            background: "linear-gradient(135deg,rgba(192,132,252,.12),rgba(155,108,245,.04))",
+            border: "1px solid rgba(192,132,252,.35)",
+            borderRadius: 12,
+            animation: "fadeUp .4s ease both",
+          }}>
+            <span style={{ fontSize: 18 }}>💜</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, color: "#9b6cf5", fontWeight: 600 }}>
+                {pendingRecs.length === 1 ? "朋友推薦了 1 家店給你" : `${pendingRecs.length} 位朋友推薦了店給你`}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--dim)", marginTop: 2 }}>
+                下次抽店有機會抽到，或點下方「朋友圈」看清單
+              </div>
+            </div>
+            <button
+              onClick={() => { setShowFriends(true); dismissPendingToast(); }}
+              style={{ background: "rgba(192,132,252,.15)", border: "1px solid #c084fc", color: "#9b6cf5", cursor: "pointer", padding: "4px 10px", fontSize: 11, fontWeight: 600, borderRadius: 14 }}
+            >看看</button>
+            <button
+              onClick={dismissPendingToast}
+              style={{ background: "transparent", border: "none", color: "var(--dim)", cursor: "pointer", padding: 4, fontSize: 16 }}
+              aria-label="關閉"
+            >✕</button>
+          </div>
+        </div>
+      )}
+
       {/* R3: 朋友吃了我推薦的店通知 toast（彈一張卡，點 ✓ 標已讀） */}
       {ackToasts.length > 0 && (
         <div style={{ padding: "0 16px 8px", position: "relative", zIndex: 1 }}>
@@ -797,6 +843,25 @@ export default function App() {
         </div>
           );
         })()}
+
+        {/* 來點挑戰 toggle — 移到主 CTA 上方，跟「抽店」這個動作視覺相鄰 */}
+        {!pick && !spinning && (
+          <button
+            onClick={() => updatePrefs({ enableTasks: !prefs.enableTasks })}
+            title="開啟後抽店時順便抽一張吃飯任務"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "6px 14px", borderRadius: 20,
+              border: prefs.enableTasks ? "1px solid #c084fc" : "1px dashed var(--sf2)",
+              background: prefs.enableTasks ? "rgba(192,132,252,.12)" : "transparent",
+              color: prefs.enableTasks ? "#9b6cf5" : "var(--dim)",
+              fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all .2s",
+              marginTop: 14, marginBottom: 0,
+            }}
+          >
+            {prefs.enableTasks ? "✓ 抽店帶一張挑戰" : "🎲 順手抽一張挑戰"}
+          </button>
+        )}
 
         <button onClick={spin} disabled={!filtered.length || spinning || busy} style={{
           marginTop: 20, width: 220, height: 56, borderRadius: 60, border: "none",
@@ -1097,21 +1162,6 @@ export default function App() {
             >
               {prefs.excludeChains ? "✓" : "○"} 排除連鎖
             </button>
-            {/* 任務卡 toggle — 開啟後抽店時順便抽一張吃飯任務（用紫色區隔於前兩個綠色 toggle）*/}
-            <button
-              onClick={() => { updatePrefs({ enableTasks: !prefs.enableTasks }); }}
-              title="抽店時順便抽一張吃飯任務"
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 4,
-                padding: "3px 10px", borderRadius: 20,
-                border: prefs.enableTasks ? "1px solid #c084fc" : "1px solid var(--sf2)",
-                background: prefs.enableTasks ? "rgba(192,132,252,.12)" : "transparent",
-                color: prefs.enableTasks ? "#9b6cf5" : "var(--dim)",
-                fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all .2s",
-              }}
-            >
-              {prefs.enableTasks ? "✓" : "○"} 🎲 挑戰
-            </button>
           </div>
         </div>
         <div style={{
@@ -1281,14 +1331,32 @@ export default function App() {
         }}>
           <Prohibit size={16} weight="duotone" /> 黑名單
         </button>
-        <button onClick={() => setShowFriends(true)} style={{
-          display: "inline-flex", alignItems: "center", gap: 6,
-          background: "transparent", border: "none",
-          color: "var(--dim)", fontSize: 13, fontWeight: 500,
-          cursor: "pointer", padding: "6px 8px",
-        }}>
-          <UsersThree size={16} weight="duotone" /> 朋友圈
-        </button>
+        {/* 朋友圈按鈕 — 加未讀紅點 badge（pending recs + acks）*/}
+        {(() => {
+          const unread = pendingRecs.length + ackToasts.length;
+          return (
+            <button onClick={() => setShowFriends(true)} style={{
+              position: "relative",
+              display: "inline-flex", alignItems: "center", gap: 6,
+              background: "transparent", border: "none",
+              color: unread > 0 ? "#9b6cf5" : "var(--dim)",
+              fontSize: 13, fontWeight: unread > 0 ? 700 : 500,
+              cursor: "pointer", padding: "6px 8px",
+            }}>
+              <UsersThree size={16} weight="duotone" /> 朋友圈
+              {unread > 0 && (
+                <span style={{
+                  position: "absolute", top: 2, right: -2,
+                  background: "linear-gradient(135deg,#c084fc,#9b6cf5)",
+                  color: "#fff", fontSize: 10, fontWeight: 700,
+                  minWidth: 16, height: 16, padding: "0 4px",
+                  borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: "0 2px 6px rgba(192,132,252,.4)",
+                }}>{unread > 9 ? "9+" : unread}</span>
+              )}
+            </button>
+          );
+        })()}
       </div>
 
       <footer style={{ textAlign: "center", padding: "16px 16px 0", fontSize: 11, color: "var(--dim)", position: "relative", zIndex: 1, opacity: .5 }}>

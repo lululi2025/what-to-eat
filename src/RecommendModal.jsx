@@ -58,11 +58,24 @@ export function RecommendModal({ place, onClose, onSent }) {
         lat: place.lat, lng: place.lng, addr: place.addr,
       }, message.trim());
       setSuccess(true);
-      setTimeout(() => { onSent?.(); onClose(); }, 1200);
+      // 不自動關 modal — 讓使用者可以順手用 LINE 通知朋友
     } catch (e) {
       alert("推薦失敗，稍後再試");
       setSending(false);
     }
+  };
+
+  // 順手分享到 LINE / 任何 chat — 朋友收到訊息會立刻看到，避免推薦消失在 App 裡
+  const handleShareLine = async () => {
+    const shareText = `我推薦你「${place.name}」🍽\n${message.trim() ? `「${message.trim()}」\n` : ""}打開「今天吃什麼」抽店時有機會抽到\nhttps://what-to-eat-pi-two.vercel.app`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: place.name, text: shareText });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(shareText);
+        alert("訊息已複製到剪貼簿，貼到 LINE 給朋友吧");
+      }
+    } catch (_) { /* user cancelled */ }
   };
 
   return (
@@ -166,23 +179,62 @@ export function RecommendModal({ place, onClose, onSent }) {
         {/* Footer button */}
         {!loading && friends.length > 0 && (
           <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border)" }}>
-            <button
-              onClick={handleSend}
-              disabled={selected.size === 0 || sending}
-              style={{
-                width: "100%", padding: "12px",
-                borderRadius: 12, border: "none",
-                background: success ? "var(--accent3)" : (selected.size > 0 ? "linear-gradient(135deg,var(--accent),var(--accent2))" : "var(--sf2)"),
-                color: "#fff", fontFamily: "var(--fb)", fontWeight: 700, fontSize: 15,
-                cursor: selected.size === 0 || sending ? "not-allowed" : "pointer",
-                opacity: selected.size === 0 ? 0.5 : 1,
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                transition: "all .2s",
-              }}
-            >
-              {success ? "✓ 推薦成功！" : sending ? "送出中..." :
-                <><PaperPlaneTilt size={18} weight="duotone" /> 推給 {selected.size > 0 ? `${selected.size} 位` : ""}朋友</>}
-            </button>
+            {success ? (
+              <>
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  padding: "10px", marginBottom: 10,
+                  background: "rgba(61,139,94,.1)", borderRadius: 10,
+                  color: "var(--accent3)", fontSize: 14, fontWeight: 700,
+                }}>
+                  ✓ 推薦已送出
+                </div>
+                <div style={{ fontSize: 11, color: "var(--dim)", textAlign: "center", marginBottom: 10, lineHeight: 1.5 }}>
+                  朋友抽店時有機會抽到 — 也可以順手 LINE 提醒他
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={handleShareLine}
+                    style={{
+                      flex: 2, padding: "11px",
+                      borderRadius: 12, border: "none",
+                      background: "linear-gradient(135deg,#00C300,#06A906)",
+                      color: "#fff", fontWeight: 700, fontSize: 14,
+                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    }}
+                  >
+                    <PaperPlaneTilt size={16} weight="duotone" /> 順手 LINE 給朋友
+                  </button>
+                  <button
+                    onClick={() => { onSent?.(); onClose(); }}
+                    style={{
+                      flex: 1, padding: "11px",
+                      borderRadius: 12, border: "1px solid var(--sf2)",
+                      background: "transparent", color: "var(--dim)",
+                      fontWeight: 600, fontSize: 14, cursor: "pointer",
+                    }}
+                  >完成</button>
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={handleSend}
+                disabled={selected.size === 0 || sending}
+                style={{
+                  width: "100%", padding: "12px",
+                  borderRadius: 12, border: "none",
+                  background: selected.size > 0 ? "linear-gradient(135deg,var(--accent),var(--accent2))" : "var(--sf2)",
+                  color: "#fff", fontFamily: "var(--fb)", fontWeight: 700, fontSize: 15,
+                  cursor: selected.size === 0 || sending ? "not-allowed" : "pointer",
+                  opacity: selected.size === 0 ? 0.5 : 1,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  transition: "all .2s",
+                }}
+              >
+                {sending ? "送出中..." :
+                  <><PaperPlaneTilt size={18} weight="duotone" /> 推給 {selected.size > 0 ? `${selected.size} 位` : ""}朋友</>}
+              </button>
+            )}
           </div>
         )}
       </div>
