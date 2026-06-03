@@ -170,6 +170,29 @@ docs/superpowers/specs/  ← 視覺重設計 spec
 - GCP daily quota 設 100/day for Place Details Photos
 - Photo 只用在「抽中卡片」（一次抽店 1 張）+「群組滑卡」（一場 12 張）
 
+#### Clay-toy 美學重塑（2026-06-02 晚間，commit 5ae4c8e）
+**Design intent**：UI 跟 favicon / 心情插圖的「3D 黏土玩具感」對齊，從 flat web design 變物理厚實感
+- 全頁 SVG turbulence grain noise overlay（0.18 opacity, mix-blend multiply）= 紙質印刷感
+- H1 48px + 「？」傾斜 -14deg + scale 56 + textShadow = 標題變雕塑
+- Section headers 加雜誌編號 01 / 02 / 03（橘色 Fraunces italic）
+- 心情卡 ON 狀態 `translateY(-4px)` + 多層厚陰影 + inset highlight
+- Spin Zone 卡片 borderRadius 22 + chunky 多層陰影（baseChunky 永遠在）
+- 「給我好店」主 CTA 改 3D push 按鈕（底層 6px 暗影模擬厚度，`:active` translateY(4px)）
+- 餐廳列表 row 去 border、加多層柔陰影 + inner highlight，`.resto-row:hover` lift -3px
+
+#### UX 閉環回饋（2026-06-02 晚間，commit eff4635）
+- 完成挑戰 → 14 顆紫/綠/黃小煙火爆炸 + 三段震動 [30,40,50] + 完成狀態加綠虛線提示「↓ 順手按下方『我去吃了』一起記下這餐」
+- 評分送出 → 主畫面跳綠色 toast「✓ 已加入吃過的店」+ 「看紀錄 →」按鈕一鍵開 HistoryModal
+- 任務 + 評分都完成 → toast 升級「🎉 完美的一餐！」
+- 加新 keyframe `taskBurst`（用 `--angle` CSS variable 讓 14 個粒子各自方向飛）
+
+#### Nav 結構大調（2026-06-02 晚間，commit 77e3070）
+**底部三個 link 全砍**：吃過的店 / 黑名單 / 朋友圈搬進 SettingsModal「我的資料」section
+- 右上 ⚙️ 設定 icon 加紫色紅點 badge（顯示 pending recs + acks 未讀總數）
+- SettingsModal 接 props `onOpenHistory` / `onOpenBlacklist` / `onOpenFriends` / `friendsBadge`
+- 點 nav item 自動關設定 modal 並打開對應 modal（不套娃 modal）
+- 移動原因：底部 link 太沉、user 反饋「scroll 才看到、根本不會發現」
+
 #### Code 品質
 - 抽出 `resetPick()` helper（9 處重複歸一）
 - `console.log` 用 `import.meta.env?.DEV` gate（prod 不污染 console）
@@ -191,6 +214,8 @@ docs/superpowers/specs/  ← 視覺重設計 spec
 | **D4 冷智慧推播** | 主動引流但易煩 | ⭐⭐⭐ 規則引擎 + 通知權限 |
 
 **注意 D1 啟動時機**：等使用者累積 30+ 家紀錄才有故事，現階段先讓任務卡 / 朋友圈玩 1-2 週累積資料。
+
+**下次 session 之前**：Lulu 應該已經跟朋友開幾場群組房、完成幾張挑戰、推幾家店給朋友、實際吃過 5+ 家店。再回來時帶著「實際卡住的 pain point」動。不要再憑空疊功能。
 
 #### Photo 用量設計取捨（不要破壞）
 - **列表永遠不加回 photo** — 已確認決策，emoji 已經夠用
@@ -250,3 +275,11 @@ Supabase 操作：CLI 已 link，DB password 在 `.env.local` 的 `DB_PASSWORD_F
 15. **device_id 跨裝置不能互通**：朋友圈靠 `wte_device_id` 互信，換手機 device_id 重新生，朋友關係會斷。日後若要跨裝置同步必須上 Supabase Auth。
 
 16. **friendships table 約束 `device_a < device_b`**：寫入時要先 orderPair 把兩個 device_id 排序，小的放 a 大的放 b，避免重複條目。
+
+17. **SVG inline data URL grain texture**：用 `<rect width='100%' filter='url(%23n)'/>` 時 `#` 要 escape 成 `%23`，不然瀏覽器當成 anchor 失效。
+
+18. **inline keyframe 需要不同方向時用 CSS variable**：例如 `taskBurst` 用 `--angle` 變數讓 14 個粒子各自方向飛，純 keyframe 做不到（keyframe 不能讀 inline transform）。
+
+19. **SettingsModal 變 nav hub 後別忘了 badge 同步**：⚙️ icon 跟 SettingsModal 內的「朋友圈」入口都要顯示 `pendingRecs.length + ackToasts.length`，加新通知類資料時要同步兩處。
+
+20. **clay shadow 別蓋掉稀有度 glow**：Spin Zone 卡片 `baseChunky` shadow 永遠在，但 SSR/SR 命中時用 `${rMeta.color}40, ${baseChunky}` 疊加，純 SSR `rMeta.glow` 不疊（避免遮住光暈）。
