@@ -850,16 +850,24 @@ export default function App() {
             onClick={() => updatePrefs({ enableTasks: !prefs.enableTasks })}
             title="開啟後抽店時順便抽一張吃飯任務"
             style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "6px 14px", borderRadius: 20,
-              border: prefs.enableTasks ? "1px solid #c084fc" : "1px dashed var(--sf2)",
-              background: prefs.enableTasks ? "rgba(192,132,252,.12)" : "transparent",
-              color: prefs.enableTasks ? "#9b6cf5" : "var(--dim)",
-              fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all .2s",
+              display: "inline-flex", alignItems: "center", gap: 8,
+              padding: "8px 16px", borderRadius: 24,
+              border: "1.5px solid #c084fc",
+              background: prefs.enableTasks ? "linear-gradient(135deg,#c084fc,#9b6cf5)" : "rgba(192,132,252,.08)",
+              color: prefs.enableTasks ? "#fff" : "#9b6cf5",
+              fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all .2s",
               marginTop: 14, marginBottom: 0,
+              boxShadow: prefs.enableTasks ? "0 4px 14px rgba(192,132,252,.4)" : "none",
             }}
           >
-            {prefs.enableTasks ? "✓ 抽店帶一張挑戰" : "🎲 順手抽一張挑戰"}
+            <span style={{
+              width: 18, height: 18, borderRadius: "50%",
+              background: prefs.enableTasks ? "#fff" : "transparent",
+              border: prefs.enableTasks ? "none" : "1.5px solid #c084fc",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "#9b6cf5", fontWeight: 700, fontSize: 12,
+            }}>{prefs.enableTasks ? "✓" : ""}</span>
+            🎲 來點挑戰任務
           </button>
         )}
 
