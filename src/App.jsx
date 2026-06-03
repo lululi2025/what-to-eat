@@ -539,7 +539,15 @@ export default function App() {
 
   return (
     <div style={{ ...css, minHeight: "100vh", background: "var(--bg)", color: "var(--tx)", fontFamily: "var(--fb)", padding: "0 0 calc(40px + env(safe-area-inset-bottom))", position: "relative", overflow: "hidden" }}>
+      {/* 暖色 radial gradient 背景 */}
       <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", background: "radial-gradient(ellipse at 20% 0%,rgba(232,97,44,.07) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(61,139,94,.05) 0%,transparent 50%)" }} />
+      {/* Grain noise overlay — SVG turbulence 紙質感，讓奶油白不死板 */}
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none",
+        background: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.2  0 0 0 0 0.15  0 0 0 0 0.1  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")`,
+        opacity: 0.18,
+        mixBlendMode: "multiply",
+      }} />
 
       {/* Top: 只留設定 icon — 群組/歷史/黑名單下放到內容區與底部 */}
       <nav style={{
@@ -558,11 +566,18 @@ export default function App() {
         padding: "16px 16px 18px",
       }}>
         <h1 style={{
-          fontFamily: "var(--fd)", fontWeight: 600, fontSize: 42,
-          letterSpacing: -0.8, color: "var(--tx)",
-          margin: 0, lineHeight: 1.1,
+          fontFamily: "var(--fd)", fontWeight: 600, fontSize: 48,
+          letterSpacing: 0, color: "var(--tx)",
+          margin: 0, lineHeight: 1.05,
         }}>
-          今天吃什麼<span style={{ color: "var(--accent)", fontStyle: "italic", marginLeft: 2 }}>？</span>
+          今天吃什麼<span style={{
+            color: "var(--accent)", fontStyle: "italic",
+            display: "inline-block", marginLeft: 4,
+            fontWeight: 700, fontSize: 56,
+            transform: "rotate(-14deg) translateY(2px)",
+            transformOrigin: "center",
+            textShadow: "0 4px 12px rgba(232,97,44,.25)",
+          }}>？</span>
         </h1>
 
         <p style={{
@@ -708,16 +723,18 @@ export default function App() {
           const cardBorder = done && rMeta ? `2px solid ${rMeta.color}`
             : (done ? "2px solid var(--accent)"
               : (isHellMode ? "2px solid rgba(127,29,29,.35)" : "2px solid var(--sf2)"));
+          // 黏土感：未抽中時加多層厚陰影 + inset highlight 模擬「捏出來的物件」
+          const baseChunky = "0 12px 28px -8px rgba(232,97,44,.18), 0 4px 8px rgba(0,0,0,.04), inset 0 1px 0 rgba(255,255,255,.7)";
           const cardShadow = done && isSSR ? rMeta.glow
-            : (done && isSR ? `0 0 20px ${rMeta.color}40`
-            : (done ? "0 0 40px rgba(232,97,44,.15)"
-              : (isHellMode ? "0 0 30px rgba(127,29,29,.18)" : "none")));
+            : (done && isSR ? `0 0 20px ${rMeta.color}40, ${baseChunky}`
+            : (done ? `0 0 40px rgba(232,97,44,.15), ${baseChunky}`
+              : (isHellMode ? `0 0 30px rgba(127,29,29,.18), ${baseChunky}` : baseChunky)));
           const confettiCount = isSSR ? 28 : (isSR ? 18 : 12);
           return (
         <div style={{
           width: "100%", maxWidth: 400, minHeight: pick || spinning ? 200 : 0,
           background: cardBg,
-          borderRadius: "var(--r)", border: cardBorder,
+          borderRadius: 22, border: cardBorder,
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
           padding: 24, transition: "all .4s",
           boxShadow: cardShadow,
@@ -871,8 +888,12 @@ export default function App() {
           </button>
         )}
 
-        <button onClick={spin} disabled={!filtered.length || spinning || busy} style={{
-          marginTop: 20, width: 220, height: 56, borderRadius: 60, border: "none",
+        <button
+          onClick={spin}
+          disabled={!filtered.length || spinning || busy}
+          className="chunky-cta"
+          style={{
+          marginTop: 20, width: 220, height: 60, borderRadius: 60, border: "none",
           background: spinning
             ? "var(--sf2)"
             : prefs.difficulty === "hell"
@@ -881,9 +902,13 @@ export default function App() {
           color: spinning ? "var(--dim)" : "#fff",
           fontFamily: "var(--fd)", fontWeight: 700, fontSize: 18,
           cursor: !filtered.length || spinning || busy ? "not-allowed" : "pointer",
-          boxShadow: spinning ? "none" : (prefs.difficulty === "hell" ? "0 6px 30px rgba(220,38,38,.4)" : "0 6px 30px rgba(232,97,44,.3)"),
-          transition: "all .3s", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          transform: spinning ? "scale(.96)" : "scale(1)",
+          // 黏土感 3D push 按鈕：底層暗色 = 厚度 + 多層陰影 + inset highlight
+          boxShadow: spinning ? "0 1px 0 rgba(0,0,0,.2)" : (prefs.difficulty === "hell"
+            ? "0 6px 0 #7f1d1d, 0 10px 24px rgba(220,38,38,.35), inset 0 1px 0 rgba(255,255,255,.25)"
+            : "0 6px 0 #C04E1E, 0 10px 24px rgba(232,97,44,.35), inset 0 1px 0 rgba(255,255,255,.3)"),
+          transition: "all .15s cubic-bezier(.17,.67,.21,1.25)",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          transform: spinning ? "translateY(4px)" : "translateY(0)",
           opacity: !filtered.length || busy ? .4 : 1,
         }}>
           {spinning ? <><span style={{ animation: "spin .6s linear infinite", display: "inline-flex" }}><DiceFive size={20} weight="duotone" /></span> 選擇中...</>
@@ -1092,7 +1117,10 @@ export default function App() {
           fontSize: 11, color: "var(--dim)", marginBottom: 8,
           fontFamily: "var(--fb)", fontWeight: 500, letterSpacing: 0.5,
           textTransform: "uppercase",
-        }}>今天的心情</div>
+        }}>
+          <span style={{ color: "var(--accent)", fontWeight: 700, fontFamily: "var(--fd)", fontSize: 13, fontStyle: "italic", marginRight: 6, letterSpacing: 0 }}>01</span>
+          · 今天的心情
+        </div>
         <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6, scrollbarWidth: "none" }}>
           {MOODS.map(m => {
             const on = prefs.mood === m.id;
@@ -1106,14 +1134,18 @@ export default function App() {
                   flex: "0 0 auto",
                   width: 64, padding: "6px 4px 8px",
                   display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-                  borderRadius: 14,
-                  border: on ? "2px solid var(--accent)" : "2px solid transparent",
+                  borderRadius: 16,
+                  border: on ? "2px solid var(--accent)" : "1.5px solid transparent",
                   background: on ? "#FFF7EF" : "var(--sf)",
                   color: on ? "var(--accent)" : "var(--tx)",
                   fontFamily: "var(--fb)", fontWeight: on ? 600 : 500, fontSize: 11,
                   cursor: busy ? "not-allowed" : "pointer",
-                  opacity: busy ? .5 : 1, transition: "all .15s",
-                  boxShadow: on ? "0 4px 12px rgba(232,97,44,.18)" : "0 1px 0 var(--border)",
+                  opacity: busy ? .5 : 1, transition: "all .2s cubic-bezier(.17,.67,.21,1.25)",
+                  // 黏土感：選中時 pop 起來 + 多層厚陰影 + inner highlight
+                  transform: on ? "translateY(-4px)" : "translateY(0)",
+                  boxShadow: on
+                    ? "0 10px 20px -4px rgba(232,97,44,.35), 0 3px 6px rgba(232,97,44,.15), inset 0 1px 0 rgba(255,255,255,.7)"
+                    : "0 2px 4px rgba(0,0,0,.04), 0 1px 0 var(--border), inset 0 1px 0 rgba(255,255,255,.4)",
                 }}>
                 <img
                   src={m.icon}
@@ -1137,7 +1169,10 @@ export default function App() {
             fontSize: 11, color: "var(--dim)",
             fontFamily: "var(--fb)", fontWeight: 500, letterSpacing: 0.5,
             textTransform: "uppercase",
-          }}>驚喜程度</span>
+          }}>
+            <span style={{ color: "var(--accent)", fontWeight: 700, fontFamily: "var(--fd)", fontSize: 13, fontStyle: "italic", marginRight: 6, letterSpacing: 0 }}>02</span>
+            · 驚喜程度
+          </span>
           <div style={{ display: "flex", gap: 6 }}>
             {(() => {
               const onlyOpen = prefs.onlyOpen ?? true;
@@ -1213,7 +1248,10 @@ export default function App() {
             fontSize: 11, color: "var(--dim)",
             fontFamily: "var(--fb)", fontWeight: 500, letterSpacing: 0.5,
             textTransform: "uppercase",
-          }}>顯示範圍</span>
+          }}>
+            <span style={{ color: "var(--accent)", fontWeight: 700, fontFamily: "var(--fd)", fontSize: 13, fontStyle: "italic", marginRight: 6, letterSpacing: 0 }}>03</span>
+            · 顯示範圍
+          </span>
           <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)", fontFamily: "var(--fd)" }}>{distLabel}</span>
         </div>
         <input type="range" min={200} max={2000} step={100} value={radius}
@@ -1257,14 +1295,18 @@ export default function App() {
                 href={gmapUrl(r.name, r.lat, r.lng)}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="resto-row"
                 style={{
                   display: "flex", alignItems: "center", gap: 12,
                   background: baseBg,
-                  borderRadius: 14, padding: "12px 14px",
-                  border: isPicked ? "1.5px solid var(--accent)" : "1.5px solid transparent",
+                  borderRadius: 16, padding: "13px 14px",
+                  border: isPicked ? "1.5px solid var(--accent)" : "1px solid rgba(0,0,0,.04)",
                   animation: `fadeUp .35s ease ${i * .03}s both`,
                   textDecoration: "none", color: "inherit", cursor: "pointer",
-                  transition: "background .15s ease, transform .1s ease",
+                  // 黏土感：多層柔陰影 + inner highlight 撐起層次
+                  boxShadow: isPicked
+                    ? "0 8px 20px -6px rgba(232,97,44,.25), 0 2px 4px rgba(0,0,0,.04), inset 0 1px 0 rgba(255,255,255,.6)"
+                    : "0 4px 10px -2px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.03), inset 0 1px 0 rgba(255,255,255,.5)",
                   opacity: isClosed ? 0.5 : 1,
                   filter: isClosed ? "grayscale(0.7)" : "none",
                 }}
@@ -1478,6 +1520,12 @@ export default function App() {
         @keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
         @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
         @keyframes skeletonPulse{0%,100%{opacity:.55}50%{opacity:.85}}
+        /* 主 CTA 黏土感 push effect — 按下時整顆下沉、厚度收回 */
+        .chunky-cta:not(:disabled):active{transform:translateY(4px)!important;box-shadow:0 2px 0 #C04E1E,0 4px 10px rgba(232,97,44,.25),inset 0 1px 0 rgba(255,255,255,.3)!important}
+        .chunky-cta:not(:disabled):hover{transform:translateY(-1px);filter:brightness(1.04)}
+        /* 餐廳 row hover lift */
+        .resto-row{transition:transform .18s cubic-bezier(.17,.67,.21,1.25),box-shadow .18s ease,background .15s ease!important}
+        .resto-row:hover{transform:translateY(-3px)!important;box-shadow:0 14px 28px -10px rgba(0,0,0,.16),0 6px 12px rgba(0,0,0,.06)!important}
         @keyframes ssrGlow{0%,100%{box-shadow:0 0 24px rgba(255,213,107,.45),0 0 40px rgba(255,126,95,.18)}50%{box-shadow:0 0 44px rgba(255,213,107,.7),0 0 80px rgba(255,126,95,.35)}}
         @keyframes srGlow{0%,100%{box-shadow:0 0 18px rgba(192,132,252,.3)}50%{box-shadow:0 0 32px rgba(192,132,252,.55)}}
         input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);border:3px solid var(--bg);box-shadow:0 0 8px rgba(232,97,44,.4);cursor:pointer}
