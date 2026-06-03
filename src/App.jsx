@@ -118,6 +118,7 @@ export default function App() {
   // 任務卡：當前抽到的任務、完成狀態
   const [currentTask, setCurrentTask] = useState(null);
   const [taskCompleted, setTaskCompleted] = useState(false);
+  const [taskCelebrate, setTaskCelebrate] = useState(false); // 完成挑戰瞬間的小煙火動畫
   // E5: 重複 9 次的清空抽店狀態抽成一個 helper（換 mood/difficulty/距離等都會用到）
   const resetPick = useCallback(() => {
     setPick(null); setDone(false); setPickRarity(null);
@@ -141,6 +142,7 @@ export default function App() {
   const [recommendingPlace, setRecommendingPlace] = useState(null); // place 物件 = 開啟 RecommendModal
   const [ackToasts, setAckToasts] = useState([]); // R3: 朋友吃了我推薦的店通知
   const [pendingRecs, setPendingRecs] = useState([]); // R2: 朋友推薦給我的店
+  const [historyToast, setHistoryToast] = useState(null); // { name, withTask } 加入歷史後顯示
   const [inviteCode, setInviteCode] = useState(null);  // 從 URL ?r= 拿到的邀請房號
   const [ratingFor, setRatingFor] = useState(null);
   const [pendingAutoSpin, setPendingAutoSpin] = useState(false);
@@ -491,6 +493,9 @@ export default function App() {
       // 若這輪有任務 + 完成了，把任務一起塞進歷史
       task: currentTask ? { id: currentTask.id, text: currentTask.text, cat: currentTask.cat, completed: taskCompleted } : null,
     });
+    // 給「閉環」回饋 — 主畫面跳 toast 告知已記錄 + 提供查看入口
+    setHistoryToast({ name: ratingFor.name, withTask: !!(currentTask && taskCompleted) });
+    setTimeout(() => setHistoryToast(null), 5000);
     setRatingFor(null);
     // 評分完不重轉，停留在 done 狀態
   };
@@ -659,6 +664,44 @@ export default function App() {
             >看看</button>
             <button
               onClick={dismissPendingToast}
+              style={{ background: "transparent", border: "none", color: "var(--dim)", cursor: "pointer", padding: 4, fontSize: 16 }}
+              aria-label="關閉"
+            >✕</button>
+          </div>
+        </div>
+      )}
+
+      {/* 「我去吃了」評分完成 toast — 給閉環回饋：確認已記錄 + 提供查看入口 */}
+      {historyToast && (
+        <div style={{ padding: "0 16px 8px", position: "relative", zIndex: 1 }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "12px 14px",
+            background: "linear-gradient(135deg,rgba(61,139,94,.14),rgba(61,139,94,.04))",
+            border: "1.5px solid var(--accent3)",
+            borderRadius: 14,
+            animation: "fadeUp .4s ease both",
+            boxShadow: "0 8px 20px -6px rgba(61,139,94,.25), inset 0 1px 0 rgba(255,255,255,.6)",
+          }}>
+            <span style={{ fontSize: 22 }}>{historyToast.withTask ? "🎉" : "✓"}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, color: "var(--accent3)", fontWeight: 700 }}>
+                {historyToast.withTask ? "完美的一餐！任務 + 評分都記下了" : "已加入「吃過的店」"}
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--tx)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {historyToast.name}
+              </div>
+            </div>
+            <button
+              onClick={() => { setShowHistory(true); setHistoryToast(null); }}
+              style={{
+                background: "rgba(61,139,94,.15)", border: "1px solid var(--accent3)",
+                color: "var(--accent3)", cursor: "pointer",
+                padding: "5px 12px", fontSize: 11, fontWeight: 700, borderRadius: 14,
+              }}
+            >看紀錄 →</button>
+            <button
+              onClick={() => setHistoryToast(null)}
               style={{ background: "transparent", border: "none", color: "var(--dim)", cursor: "pointer", padding: 4, fontSize: 16 }}
               aria-label="關閉"
             >✕</button>
@@ -971,6 +1014,22 @@ export default function App() {
                   animation: "popIn .4s cubic-bezier(.17,.67,.21,1.25) .3s both",
                   position: "relative",
                 }}>
+                  {/* 完成時的小煙火 — 紫色小點從中心爆出 */}
+                  {taskCelebrate && (
+                    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
+                      {Array.from({ length: 14 }).map((_, i) => (
+                        <span key={i} style={{
+                          position: "absolute", left: "50%", top: "50%",
+                          width: 5 + Math.random() * 4, height: 5 + Math.random() * 4,
+                          borderRadius: "50%",
+                          background: ["#c084fc", "#9b6cf5", "#86efac", "#fde68a", "#fff"][Math.floor(Math.random() * 5)],
+                          "--angle": `${(360 / 14) * i}deg`,
+                          animation: "taskBurst .9s cubic-bezier(.2,.7,.3,1.1) forwards",
+                          animationDelay: `${i * 0.02}s`,
+                        }} />
+                      ))}
+                    </div>
+                  )}
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: taskCompleted ? "var(--accent3)" : "#9b6cf5", letterSpacing: 0.5, textTransform: "uppercase" }}>
                       {cat.emoji} {taskCompleted ? "已完成挑戰" : "今日挑戰"}
@@ -980,10 +1039,15 @@ export default function App() {
                   <div style={{ fontSize: 14, fontWeight: 600, color: "var(--tx)", lineHeight: 1.5, textDecoration: taskCompleted ? "line-through" : "none", opacity: taskCompleted ? 0.7 : 1 }}>
                     {currentTask.text}
                   </div>
-                  {!taskCompleted && (
+                  {!taskCompleted ? (
                     <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
                       <button
-                        onClick={() => { setTaskCompleted(true); if (navigator.vibrate) navigator.vibrate(40); }}
+                        onClick={() => {
+                          setTaskCompleted(true);
+                          setTaskCelebrate(true);
+                          if (navigator.vibrate) navigator.vibrate([30, 40, 50]);
+                          setTimeout(() => setTaskCelebrate(false), 1100);
+                        }}
                         style={{
                           flex: 1, padding: "6px 10px", borderRadius: 10, border: "1px solid var(--accent3)",
                           background: "rgba(61,139,94,.1)", color: "var(--accent3)", fontSize: 12, fontWeight: 600, cursor: "pointer",
@@ -997,6 +1061,15 @@ export default function App() {
                         }}
                         title="不喜歡這張，換一張任務"
                       >🎲</button>
+                    </div>
+                  ) : (
+                    /* 已完成 — 提示下一步「按下方『我去吃了』一起記下」*/
+                    <div style={{
+                      marginTop: 10, padding: "8px 10px", borderRadius: 10,
+                      background: "rgba(61,139,94,.06)", border: "1px dashed rgba(61,139,94,.3)",
+                      fontSize: 11, color: "var(--accent3)", textAlign: "center", fontWeight: 600,
+                    }}>
+                      ↓ 順手按下方「我去吃了」一起記下這餐
                     </div>
                   )}
                 </div>
@@ -1520,6 +1593,11 @@ export default function App() {
         @keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
         @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
         @keyframes skeletonPulse{0%,100%{opacity:.55}50%{opacity:.85}}
+        /* 任務完成小煙火 — 每個粒子從中心朝外飛、漸消失 */
+        @keyframes taskBurst{
+          0%{transform:translate(-50%,-50%) rotate(var(--angle,0deg)) translateX(0);opacity:1}
+          100%{transform:translate(-50%,-50%) rotate(var(--angle,0deg)) translateX(80px);opacity:0}
+        }
         /* 主 CTA 黏土感 push effect — 按下時整顆下沉、厚度收回 */
         .chunky-cta:not(:disabled):active{transform:translateY(4px)!important;box-shadow:0 2px 0 #C04E1E,0 4px 10px rgba(232,97,44,.25),inset 0 1px 0 rgba(255,255,255,.3)!important}
         .chunky-cta:not(:disabled):hover{transform:translateY(-1px);filter:brightness(1.04)}
