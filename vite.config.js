@@ -17,12 +17,19 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: [
         'favicon-16.png', 'favicon-32.png', 'apple-touch-icon.png',
-        'icon-192.png', 'icon-512.png', 'og-cover.png',
-        'illustrations/*.png',
+        'icon-192.png',
+        // icon-512.png 不列在這裡：它只在「加到主畫面」用到，那時必定有網路。
+        // 注意 includeAssets 不受 globIgnores 影響，要排除就得從這份清單移掉。
+        'illustrations/*.webp',
       ],
       manifest: false, // 自己維護 public/manifest.json
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,webp,woff2}'],
+        // 這幾個不放進 precache：
+        //   og-cover.png (1MB) 只有 FB/Twitter 爬蟲會抓，使用者不需要下載
+        //   qr-share.png / favicon-preview.html 是離線用不到的輔助檔
+        //   icon-512.png (365KB) 只在「加到主畫面」那一刻用到，那時必定有網路
+        globIgnores: ['og-cover.png', 'qr-share.png', 'favicon-preview.html', 'icon-512.png'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\//,
