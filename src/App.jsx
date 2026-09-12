@@ -31,7 +31,10 @@ import {
 import { categoryKey, FoodIcon } from "./FoodIcon.jsx";
 
 // ─── Config ───
-const DAILY_LIMIT = 30;
+// 注意：這是「Google Places API 實際呼叫次數」的上限，不是「抽店次數」。
+// 一次搜尋會對每個 type 各發一個 request（例如「隨便」有 4 個 type = 4 次呼叫），
+// 所以用呼叫數計價才對得上帳單。
+const DAILY_LIMIT = 100;
 const STORAGE_KEY = "whatto_eat_daily";
 
 // ─── Rate limit helpers ───
@@ -42,10 +45,10 @@ function getRateLimit() {
     return JSON.parse(raw);
   } catch { return { date: "", count: 0 }; }
 }
-function bumpRateLimit() {
+function bumpRateLimit(n = 1) {
   const today = new Date().toISOString().slice(0, 10);
   const rl = getRateLimit();
-  const count = rl.date === today ? rl.count + 1 : 1;
+  const count = rl.date === today ? rl.count + n : n;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today, count })); } catch {}
   return count;
 }
@@ -130,6 +133,11 @@ export default function App() {
   // ─── Prefs（從 localStorage 載入）───
   const [prefs, setLocalPrefs] = useState(() => getPrefs());
   const updatePrefs = (patch) => setLocalPrefs(setPrefs(patch));
+  // locate 只在開場跑一次。若把 prefs.mood 放進它的 deps，換心情會讓 locate 換身分，
+  // 下面 useEffect(..., [locate]) 就會再跑一次 → 重新定位 + 又搜一輪（changeMood 已經搜過了）。
+  // 所以 mood 走 ref 讀取，不進 deps。
+  const moodRef = useRef(prefs.mood);
+  useEffect(() => { moodRef.current = prefs.mood; }, [prefs.mood]);
 
   // ─── 拒絕清單 + 吃過記錄 + Modal 控制 ───
   const [storageVer, setStorageVer] = useState(0);
@@ -177,7 +185,7 @@ export default function App() {
 
   // ─── Google Places Nearby Search（支援多 type 並行搜尋並合併去重）───
   const search = useCallback(async (lat, lng, types) => {
-    if (!canSearch()) { setErr(`今日搜尋已達 ${DAILY_LIMIT} 次上限`); return; }
+    if (!canSearch()) { setErr(`今日查詢已達 ${DAILY_LIMIT} 次上限`); return; }
     setBusy(true); setErr("");
     const typeList = Array.isArray(types) ? types : [types || "restaurant"];
     try {
@@ -190,6 +198,8 @@ export default function App() {
         });
         return fetch(`/api/places?${qs}`).then(r => r.json());
       }));
+      // 呼叫已經發出去就是要付錢的，不管有沒有結果都要計數
+      bumpRateLimit(typeList.length); setLeft(remaining());
 
       // 合併結果，以 place_id 去重
       const seen = new Set();
@@ -222,7 +232,6 @@ export default function App() {
           lat: p.geometry.location.lat,
           lng: p.geometry.location.lng,
         })));
-        bumpRateLimit(); setLeft(remaining());
       } else if (responses.every(d => d.status === "ZERO_RESULTS" || d.status === "OK")) {
         setList([]); setErr("附近找不到餐廳"); setErrType("");
       } else {
@@ -245,7 +254,7 @@ export default function App() {
       pos => {
         const c = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setLoc(c); setLocBusy(false);
-        search(c.lat, c.lng, getMood(prefs.mood).types);
+        search(c.lat, c.lng, getMood(moodRef.current).types);
       },
       (e) => {
         setLocBusy(false);
@@ -260,8 +269,9 @@ export default function App() {
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
-  }, [search, prefs.mood]);
+  }, [search]);
 
+  // locate 身分固定 → 這個 effect 只在掛載時跑一次
   useEffect(() => { locate(); }, [locate]);
 
   // R3: 進 App 時拉「朋友吃了我推薦的店」未讀通知 + R2: 拉朋友推給我的 pending recs
@@ -610,12 +620,12 @@ export default function App() {
           ) : "無法定位"}
         </p>
 
-        {left <= 5 && (
+        {left <= 20 && (
           <p style={{
-            color: left <= 2 ? "var(--accent2)" : "var(--dim)",
+            color: left <= 8 ? "var(--accent2)" : "var(--dim)",
             fontSize: 11, margin: "4px 0 0", fontFamily: "var(--fb)", fontWeight: 500,
           }}>
-            今日搜尋 {DAILY_LIMIT - left} / {DAILY_LIMIT}
+            今日查詢 {DAILY_LIMIT - left} / {DAILY_LIMIT} 次
           </p>
         )}
       </header>
