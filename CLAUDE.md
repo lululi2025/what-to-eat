@@ -1,6 +1,6 @@
 # CLAUDE.md — 今天吃什麼（what-to-eat）
 
-> Last updated: 2026-09-18（slim-context 瘦身；內容上一版 2026-06-02）
+> Last updated: 2026-10-11（清掉 favicon 草稿與備份檔；上一版 2026-09-18 slim-context 瘦身）
 > Codex／其他 agent 讀同層 `AGENTS.md`（指回這份）。做完的事寫進 `docs/HISTORY-已完成.md`、功能點子寫 `docs/BACKLOG-功能點子.md`，不要疊回本檔。
 
 ## Project Overview
@@ -74,6 +74,7 @@ docs/superpowers/specs/  ← 視覺重設計 spec
 ## Current Status（2026-09-18 核對）
 
 - 功能完成清單（到 06-02）在 `docs/HISTORY-已完成.md`。之後只有 09-12 兩個 commit：心情插圖改 144px WebP（首次載入 5.1MB→817KB）、換心情不再重複打 Places API（配額改計真實呼叫數）。
+- 2026-10-11 清理：`favicon-src/` 只留現行原檔 `slot-v5-burger.png`（已比對確認就是 `public/icon-512.png` 的來源）；舊圖示備份、v2–v4 草稿、`clean_Gemini_…png` 已由 Lulu 刪除。`dist/` 是建置產物，可隨時重 build。
 - 下一步原則（06-02 定）：先實際用 1–2 週累積 pain point 再加功能，不要憑空疊；候選功能見 `docs/BACKLOG-功能點子.md`。
 
 ### ⚠️ 安全債（要 Lulu 自己動手）
