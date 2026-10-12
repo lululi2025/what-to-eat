@@ -13,3 +13,9 @@ clean_Gemini_Generated_Image_*.png
 
 # Favicon source images (1024 PNG) — kept locally for re-slicing, not in repo
 favicon-src/
+
+# macOS Finder metadata
+.DS_Store
+
+# Local backups of instruction files
+*.bak-*
