@@ -1,6 +1,6 @@
 # CLAUDE.md — 今天吃什麼（what-to-eat）
 
-> Last updated: 2026-10-11（清掉 favicon 草稿與備份檔；上一版 2026-09-18 slim-context 瘦身）
+> Last updated: 2026-10-12（舊 key 已刪、已推上 GitHub；上一版 2026-10-11 清理草稿）
 > Codex／其他 agent 讀同層 `AGENTS.md`（指回這份）。做完的事寫進 `docs/HISTORY-已完成.md`、功能點子寫 `docs/BACKLOG-功能點子.md`，不要疊回本檔。
 
 ## Project Overview
@@ -75,10 +75,8 @@ docs/superpowers/specs/  ← 視覺重設計 spec
 
 - 功能完成清單（到 06-02）在 `docs/HISTORY-已完成.md`。之後只有 09-12 兩個 commit：心情插圖改 144px WebP（首次載入 5.1MB→817KB）、換心情不再重複打 Places API（配額改計真實呼叫數）。
 - 2026-10-11 清理：`favicon-src/` 只留現行原檔 `slot-v5-burger.png`（已比對確認就是 `public/icon-512.png` 的來源）；舊圖示備份、v2–v4 草稿、`clean_Gemini_…png` 已由 Lulu 刪除。`dist/` 是建置產物，可隨時重 build。
+- 2026-10-11：舊 Google API key 已在 GCP 刪除；repo 推上 GitHub `lululi2025/what-to-eat`（公開，分支 `main`，覆蓋掉 04 月的舊版）。部署仍是 `vercel --prod`，不靠 push。
 - 下一步原則（06-02 定）：先實際用 1–2 週累積 pain point 再加功能，不要憑空疊；候選功能見 `docs/BACKLOG-功能點子.md`。
-
-### ⚠️ 安全債（要 Lulu 自己動手）
-- 舊 Google API key（`AIzaSy` 開頭，完整字串在 `CLAUDE.md.bak-20260918` 第 204 行）還沒在 GCP 刪：GCP Console → API 和服務 → 憑證 → 刪除；刪前先確認新 key 在 Vercel env var 正常。⚠️ 2026-09-18：原本整串 key 寫在本檔，每次開對話都會載入，已拿掉。
 
 #### Photo 用量設計取捨（不要破壞）
 - **列表永遠不加回 photo** — 已確認決策，emoji 已經夠用
